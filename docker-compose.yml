@@ -1,0 +1,43 @@
+name: headroom
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+services:
+  headroom:
+    image: ghcr.io/headroomlabs-ai/headroom:code
+    container_name: headroom-proxy
+    restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - HEADROOM_HOST=0.0.0.0
+      - HEADROOM_PORT=8787
+      - HEADROOM_MODE=cache
+      - HEADROOM_WORKSPACE_DIR=/data
+      - HEADROOM_TELEMETRY=off
+      # Obligatorio: Traefik entra desde la red edge-headroom (no loopback)
+      - HEADROOM_PROXY_TOKEN=${HEADROOM_PROXY_TOKEN:?define HEADROOM_PROXY_TOKEN en .env}
+    volumes:
+      - headroom_data:/data
+      - headroom_config:/root/.headroom
+    # Sin "ports:": nadie llega al contenedor salvo Traefik, por la red del edge
+    networks:
+      edge:
+        aliases: [headroom-web]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8787/dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 1g
+    pids_limit: 256
+networks:
+  edge:
+    external: true
+    name: edge-headroom
+volumes:
+  headroom_data:
+  headroom_config:

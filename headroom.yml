@@ -1,0 +1,16 @@
+# headroom.yml: rutas del proyecto headroom (edge -> headroom-web:8787)
+http:
+  routers:
+    headroom-web:
+      rule: "Host(`headroom.andersoncastellon.com`)"
+      entryPoints: [websecure]
+      middlewares: [edge-secure-headers]
+      service: headroom-web
+      tls: {certResolver: le, options: default}
+  services:
+    headroom-web:
+      loadBalancer:
+        responseForwarding:
+          flushInterval: "-1"
+        servers:
+          - url: "http://headroom-web:8787"
