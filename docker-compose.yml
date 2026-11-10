@@ -25,8 +25,9 @@ services:
       - headroom_config:/root/.headroom
     # Sin "ports:": nadie llega al contenedor salvo Traefik, por la red del edge
     networks:
+      default: {}              # salida a internet (api.anthropic.com); la red edge es interna
       edge:
-        aliases: [headroom-web]
+        aliases: [headroom-web] # alias para Traefik
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8787/dashboard"]
       interval: 30s
