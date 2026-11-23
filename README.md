@@ -104,3 +104,12 @@ Luego abre en tu navegador: `http://127.0.0.1:8787/dashboard`.
 - El proxy exige token para tráfico que no sea loopback. No definas `HEADROOM_ALLOW_UNAUTHENTICATED_BIND`.
 - Telemetría desactivada (`HEADROOM_TELEMETRY=off`).
 - Si el token se expone, genera uno nuevo en el VPS (`openssl rand -hex 32`), actualiza `.env`, reinicia con `docker compose up -d` y actualiza `settings.json` en tu PC.
+
+## Perfil de compresión (cuentas OAuth)
+
+Configurado en `docker-compose.yml` para maximizar duración de sesión sin degradar ediciones de código:
+
+- `HEADROOM_MODE=token`: permite comprimir turnos anteriores (extiende sesiones ~25–35%).
+- `HEADROOM_SAVINGS_PROFILE=coding`: mantiene `protect_reads`, `code_aware`, `cross_turn_dedup`, `tool_search` y `accuracy_guard=strict`.
+- `HEADROOM_OUTPUT_SHAPER=1`: reduce verborrea en tokens de salida sin romper el prefix cache.
+- `mem_limit: 2g`: margen para el motor Kompress ONNX + Rust core.

@@ -15,7 +15,12 @@ services:
     environment:
       - HEADROOM_HOST=0.0.0.0
       - HEADROOM_PORT=8787
-      - HEADROOM_MODE=cache
+      # Modo token (suscripciones OAuth): comprime turnos antiguos para extender sesiones
+      - HEADROOM_MODE=token
+      # Perfil coding: protege lecturas de archivos activos, dedupe, code-aware y accuracy_guard=strict
+      - HEADROOM_SAVINGS_PROFILE=coding
+      # Reduce verborrea en tokens de salida preservando el prefix cache
+      - HEADROOM_OUTPUT_SHAPER=1
       - HEADROOM_WORKSPACE_DIR=/data
       - HEADROOM_TELEMETRY=off
       # Obligatorio: Traefik entra desde la red edge-headroom (no loopback)
@@ -33,7 +38,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    mem_limit: 1g
+    mem_limit: 2g
     pids_limit: 256
 
   dashboard:
