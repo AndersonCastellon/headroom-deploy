@@ -35,6 +35,34 @@ services:
       retries: 3
     mem_limit: 1g
     pids_limit: 256
+
+  dashboard:
+    image: nginx:1.27-alpine
+    container_name: headroom-dashboard
+    restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /etc/nginx/conf.d:size=1m
+      - /var/cache/nginx:size=16m
+      - /run:size=1m
+      - /tmp:size=4m
+    environment:
+      - HEADROOM_PROXY_TOKEN=${HEADROOM_PROXY_TOKEN:?define HEADROOM_PROXY_TOKEN en .env}
+      - NGINX_ENVSUBST_FILTER=^HEADROOM_PROXY_TOKEN$
+    volumes:
+      - ./dashboard-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
+    # Solo loopback del VPS: acceso únicamente por túnel SSH (ssh -L 8787:127.0.0.1:8787 ...)
+    ports:
+      - "127.0.0.1:8787:8080"
+    networks:
+      default: {}
+    depends_on:
+      - headroom
+    mem_limit: 64m
+    pids_limit: 64
 networks:
   edge:
     external: true

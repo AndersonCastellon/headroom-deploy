@@ -11,7 +11,8 @@ Despliegue del proxy [Headroom](https://github.com/headroomlabs-ai/headroom) en 
 
 | Archivo | Qué es |
 |---|---|
-| `docker-compose.yml` | Servicio del proxy |
+| `docker-compose.yml` | Servicio del proxy y sidecar loopback del dashboard |
+| `dashboard-proxy.conf.template` | Plantilla Nginx que inyecta el token solo para el dashboard en loopback |
 | `headroom.yml` | Ruta de Traefik del dominio |
 | `.env.example` | Plantilla del secreto (el `.env` real vive solo en el VPS) |
 
@@ -81,6 +82,21 @@ Cada petición de Claude Code debe aparecer como `proxy_inbound_request ... path
 - **502 con `Temporary failure in name resolution`:** el contenedor no tiene red de salida. Debe estar en `headroom_default` además de `edge-headroom`.
 - **401 `x-api-key header is required`:** la petición llegó a Anthropic sin credenciales. Revisa que Claude Code esté autenticado.
 - **401 `unauthorized` del proxy:** falta el header `X-Headroom-Proxy-Token` o el token no coincide.
+
+## Acceso al dashboard (solo por túnel SSH)
+
+El servicio `headroom-dashboard` (sidecar Nginx) publica las rutas de lectura del dashboard **únicamente en `127.0.0.1:8787`** del VPS e inyecta `X-Headroom-Proxy-Token` internamente.
+
+Desde tu máquina local:
+
+```bash
+ssh -L 8787:127.0.0.1:8787 <usuario>@<vps>
+```
+
+Luego abre en tu navegador: `http://127.0.0.1:8787/dashboard`.
+
+- El acceso público por `https://headroom.andersoncastellon.com/dashboard` sigue protegido por token (`401`).
+- El sidecar solo permite `GET`/`HEAD` sobre las rutas de métricas/dashboard y bloquea `/v1/*` (`404`).
 
 ## Seguridad
 

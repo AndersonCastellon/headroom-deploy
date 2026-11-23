@@ -1,0 +1,35 @@
+# Plantilla de Nginx para acceso solo-lectura al dashboard de Headroom
+# únicamente vía loopback del VPS (túnel SSH).
+# Procesada al arrancar por nginx:alpine (envsubst sobre HEADROOM_PROXY_TOKEN).
+
+server {
+    listen 8080;
+    server_tokens off;
+
+    # Resuelve el nombre del contenedor dinámicamente (resiste reinicios de headroom)
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    location = / {
+        return 302 /dashboard;
+    }
+
+    # Rutas de solo-lectura del dashboard y sus métricas
+    location ~ ^/(dashboard/?|dashboard/static/.+|stats|stats-history|stats-lifetime|transformations/feed|subscription-window|quota|health|favicon\.ico)$ {
+        limit_except GET HEAD {
+            deny all;
+        }
+
+        set $headroom_upstream http://headroom:8787;
+        proxy_pass $headroom_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Headroom-Proxy-Token "${HEADROOM_PROXY_TOKEN}";
+        proxy_set_header Authorization "";
+        proxy_buffering off;
+    }
+
+    # Bloquea cualquier otra ruta (/v1/*, /admin/*, etc.)
+    location / {
+        return 404;
+    }
+}
